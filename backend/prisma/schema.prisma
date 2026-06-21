@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  email             String    @unique @db.VarChar(255)
+  primaryMobile     String    @map("primary_mobile") @db.VarChar(15)
+  secondaryMobile   String?   @map("secondary_mobile") @db.VarChar(15)
+  aadhaarNumber     String    @unique @map("aadhaar_number") @db.VarChar(12)
+  panNumber         String    @unique @map("pan_number") @db.VarChar(10)
+  dateOfBirth       DateTime  @map("date_of_birth") @db.Date
+  placeOfBirth      String    @map("place_of_birth") @db.VarChar(100)
+  currentAddress    String    @map("current_address") @db.Text
+  permanentAddress  String    @map("permanent_address") @db.Text
+  isActive          Boolean   @default(true) @map("is_active")
+  isDeleted         Boolean   @default(false) @map("is_deleted")
+  deletedAt         DateTime? @map("deleted_at")
+  createdBy         String?   @map("created_by") @db.VarChar(36)
+  updatedBy         String?   @map("updated_by") @db.VarChar(36)
+  version           Int       @default(1)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  auditLogs         UserAuditLog[]
+
+  @@index([email])
+  @@index([panNumber])
+  @@index([aadhaarNumber])
+  @@index([primaryMobile])
+  @@index([isDeleted])
+  @@map("users")
+}
+
+model UserAuditLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  action      String   @db.VarChar(20)
+  oldData     Json?    @map("old_data")
+  newData     Json?    @map("new_data")
+  performedBy String?  @map("performed_by") @db.VarChar(36)
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@map("user_audit_logs")
+}
