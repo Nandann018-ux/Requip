@@ -3,10 +3,223 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Management System</title>
+    <title>UserVault — Identity Management Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: #F4F4F6;
+        font-family: 'Outfit', sans-serif;
+      }
+      #root { min-height: 100vh; }
+
+      /* ─── Splash screen ───────────────────────────── */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #0D0F1A;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #splash.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      /* Noise texture overlay */
+      #splash::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.4;
+        pointer-events: none;
+      }
+
+      /* Radial glow */
+      #splash::after {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(67,56,202,0.18) 0%, transparent 70%);
+        pointer-events: none;
+        animation: glowPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50%       { opacity: 1;   transform: scale(1.08); }
+      }
+
+      .splash-logo {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        animation: splashFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes splashFadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Shield icon mark */
+      .splash-mark {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #4338CA 0%, #6D63E8 50%, #818CF8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 0 0 1px rgba(109,99,232,0.3),
+          0 8px 32px rgba(67,56,202,0.5),
+          0 0 60px rgba(67,56,202,0.2);
+        animation: markPulse 2.5s ease-in-out infinite 0.7s;
+      }
+
+      @keyframes markPulse {
+        0%, 100% { box-shadow: 0 0 0 1px rgba(109,99,232,0.3), 0 8px 32px rgba(67,56,202,0.5), 0 0 60px rgba(67,56,202,0.2); }
+        50%       { box-shadow: 0 0 0 1px rgba(109,99,232,0.5), 0 8px 48px rgba(67,56,202,0.7), 0 0 80px rgba(67,56,202,0.35); }
+      }
+
+      .splash-mark svg {
+        width: 28px;
+        height: 28px;
+        color: white;
+      }
+
+      .splash-wordmark {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .splash-title {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 2rem;
+        letter-spacing: -0.04em;
+        color: #FFFFFF;
+        line-height: 1;
+      }
+
+      .splash-subtitle {
+        font-family: 'Fraunces', Georgia, serif;
+        font-weight: 300;
+        font-style: italic;
+        font-size: 0.875rem;
+        color: rgba(148,153,176,0.9);
+        letter-spacing: 0.01em;
+      }
+
+      /* Loading bar */
+      .splash-bar-wrap {
+        position: relative;
+        z-index: 1;
+        margin-top: 36px;
+        width: 160px;
+        height: 2px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 2px;
+        overflow: hidden;
+        animation: splashFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+      }
+
+      .splash-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #4338CA, #818CF8, #4338CA);
+        background-size: 200% 100%;
+        border-radius: 2px;
+        animation: barSlide 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+
+      @keyframes barSlide {
+        0%   { background-position: 200% 0; width: 40%; margin-left: -40%; }
+        50%  { background-position: 0% 0; width: 60%; }
+        100% { background-position: -200% 0; width: 40%; margin-left: 140%; }
+      }
+
+      .splash-hint {
+        position: relative;
+        z-index: 1;
+        margin-top: 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        color: rgba(148,153,176,0.45);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        animation: splashFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+      }
+
+      /* ─── App transitions ─────────────────────────── */
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .page-enter {
+        animation: fadeSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      /* ─── Scrollbar ───────────────────────────────── */
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #D1D3E0; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #9499B0; }
+    </style>
   </head>
   <body>
+    <!-- Splash shown before React boots -->
+    <div id="splash">
+      <div class="splash-logo">
+        <div class="splash-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="splash-wordmark">
+          <span class="splash-title">UserVault</span>
+          <span class="splash-subtitle">Identity Management Console</span>
+        </div>
+      </div>
+      <div class="splash-bar-wrap">
+        <div class="splash-bar"></div>
+      </div>
+      <span class="splash-hint">Loading…</span>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Fade out splash once React renders (MutationObserver on #root)
+      const splash = document.getElementById('splash');
+      const root   = document.getElementById('root');
+      const observer = new MutationObserver(() => {
+        if (root.children.length > 0) {
+          observer.disconnect();
+          setTimeout(() => splash.classList.add('hidden'), 80);
+          setTimeout(() => splash.remove(), 620);
+        }
+      });
+      observer.observe(root, { childList: true, subtree: false });
+    </script>
   </body>
 </html>
