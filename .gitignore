@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+build/
+
+# environment files (NEVER commit these)
+.env
+.env.local
+.env.production
+
+# coverage
+coverage/
+
+# misc
+.DS_Store
+*.log
+*.tgz
+
+# docker volumes
+mysql_data/
